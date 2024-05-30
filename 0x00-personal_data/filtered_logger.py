@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """filter_datum module"""
 import re
+from typing import List
 
 
-def filter_datum(fields, redaction, message, separator):
-    """returns the log message obfuscated:"""
-    pattern = '|'.join([f'{field}=[^{separator}]*' for field in fields])
-    return re.sub(pattern, lambda m:
-                  f"{m.group(0).split('=')[0]}={redaction}", message)
+patterns = {
+    'extract': lambda x, y: r'(?P<field>{})=[^{}]*'.format('|'.join(x), y),
+    'replace': lambda x: r'\g<field>={}'.format(x),
+}
+
+
+def filter_datum(
+        fields: List[str], redaction: str, message: str, separator: str,
+        ) -> str:
+    """Filters a log line.
+    """
+    extract, replace = (patterns["extract"], patterns["replace"])
+    return re.sub(extract(fields, separator), replace(redaction), message)
