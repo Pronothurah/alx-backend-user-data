@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """ Base module
 """
+import uuid
+import json
 from datetime import datetime
 from typing import TypeVar, List, Iterable
 from os import path
-import json
-import uuid
 
 
 TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
@@ -42,7 +42,7 @@ class Base():
             return False
         if not isinstance(self, Base):
             return False
-        return (self.id == other.id)
+        return self.id == other.id
 
     def to_json(self, for_serialization: bool = False) -> dict:
         """ Convert the object a JSON dictionary
@@ -126,12 +126,13 @@ class Base():
         """ Search all objects with matching attributes
         """
         s_class = cls.__name__
+
         def _search(obj):
             if len(attributes) == 0:
                 return True
             for k, v in attributes.items():
-                if (getattr(obj, k) != v):
+                if getattr(obj, k) != v:
                     return False
             return True
-        
+
         return list(filter(_search, DATA[s_class].values()))
