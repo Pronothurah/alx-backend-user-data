@@ -46,7 +46,7 @@ class DB:
     def find_user_by(self, **kwargs: Any) -> User:
         """Finds a user based on a set of filters.
         """
-        query = self.__session.query(User)
+        query = self._session.query(User)
         for key, value in kwargs.items():
             if hasattr(User, key):
                 query = query.filter(getattr(User, key) == value)
@@ -69,7 +69,7 @@ class DB:
             else:
                 raise ValueError()
             setattr(user, key, value)
-        self.__session.query(User).filter(User.id == user.id).update(
+        self._session.query(User).filter(User.id == user.id).update(
             update_source,
             synchronize_session=False
         )
