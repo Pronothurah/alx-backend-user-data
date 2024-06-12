@@ -33,44 +33,48 @@ class DB:
         return self.__session
 
     def add_user(self, email: str, hashed_password: str) -> User:
-        """saves user to DB"""
-        new_user = User(email=email, hashed_password=hashed_password)
+        """Adds a new user to the database.
+        """
         try:
+            new_user = User(email=email, hashed_password=hashed_password)
             self._session.add(new_user)
             self._session.commit()
-        except Exception as e:
+        except Exception:
             self._session.rollback()
-            raise e
-        if new_user is None:
-            raise ValueError("Failed to add user")
+            new_user = None
         return new_user
 
     def find_user_by(self, **kwargs) -> User:
         """Finds a user based on a set of filters.
         """
-        try:
-            user = self._session.query(User).filter_by(**kwargs).first()
-            if user is None:
-                raise NoResultFound("No user found")
-            return user
-        except InvalidRequestError as e:
-            self._session.rollback()
-            raise e
+        fields, values = [], []
+        for key, value in kwargs.items():
+            if hasattr(User, key):
+                fields.append(getattr(User, key))
+                values.append(value)
+            else:
+                raise InvalidRequestError()
+        result = self._session.query(User).filter(
+            tuple_(*fields).in_([tuple(values)])
+        ).first()
+        if result is None:
+            raise NoResultFound()
+        return result
 
-    def update_user(self, user_id: int, **kwargs: Any) -> None:
-        """Updates user attributes and commit to database"""
+    def update_user(self, user_id: int, **kwargs) -> None:
+        """Updates a user based on a given id.
+        """
         user = self.find_user_by(id=user_id)
         if user is None:
-            raise ValueError(f"User with id {user_id} not found")
+            return
         update_source = {}
         for key, value in kwargs.items():
             if hasattr(User, key):
                 update_source[getattr(User, key)] = value
             else:
                 raise ValueError()
-            setattr(user, key, value)
-        self._session.query(User).filter(User.id == user.id).update(
+        self._session.query(User).filter(User.id == user_id).update(
             update_source,
-            synchronize_session=False
+            synchronize_session=False,
         )
         self._session.commit()
