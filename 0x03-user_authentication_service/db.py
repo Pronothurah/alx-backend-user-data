@@ -45,19 +45,17 @@ class DB:
             raise ValueError("Failed to add user")
         return new_user
 
-    def find_user_by(self, **kwargs: Any) -> User:
+    def find_user_by(self, **kwargs) -> User:
         """Finds a user based on a set of filters.
         """
-        query = self._session.query(User)
-        for key, value in kwargs.items():
-            if hasattr(User, key):
-                query = query.filter(getattr(User, key) == value)
-            else:
-                raise InvalidRequestError(f"Invalid attribute: {key}")
-        user = query.first()
-        if user is None:
-            raise NoResultFound(f"No user found with attributes {kwargs}")
-        return user
+        try:
+            user = self._session.query(User).filter_by(**kwargs).first()
+            if user is None:
+                raise NoResultFound("No user found")
+            return user
+        except InvalidRequestError as e:
+            self._session.rollback()
+            raise e
 
     def update_user(self, user_id: int, **kwargs: Any) -> None:
         """Updates user attributes and commit to database"""
