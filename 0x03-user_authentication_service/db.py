@@ -40,8 +40,9 @@ class DB:
             self._session.commit()
         except Exception as e:
             self._session.rollback()
-            new_user = None
             raise e
+        if new_user is None:
+            raise ValueError("Failed to add user")
         return new_user
 
     def find_user_by(self, **kwargs: Any) -> User:
