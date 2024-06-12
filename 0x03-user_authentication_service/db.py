@@ -38,9 +38,10 @@ class DB:
         try:
             self._session.add(new_user)
             self._session.commit()
-        except Exception:
+        except Exception as e:
             self._session.rollback()
             new_user = None
+            raise e
         return new_user
 
     def find_user_by(self, **kwargs: Any) -> User:
